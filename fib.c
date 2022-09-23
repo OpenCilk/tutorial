@@ -3,6 +3,9 @@
 
 #include <cilk/cilk.h>
 
+#define CTIMER_MEASURE_ON_STOP
+#include "ctimer.h"
+
 long fib(long n) {
   if (n < 2)
     return n;
@@ -17,7 +20,14 @@ int main(int argc, char *argv[]) {
   if (argc > 1)
     n = atol(argv[1]);
 
+  ctimer_t t;
+  ctimer_start(&t);
+
   long result = fib(n);
+
+  ctimer_stop(&t);
+
   printf("fib(%ld) = %ld\n", n, result);
+  ctimer_print(&t, "fib");
   return 0;
 }
