@@ -14,6 +14,8 @@
 #include <cilk/cilk.h>
 #include <cilk/cilkscale.h>
 
+#include "ctimer.h"
+
 void swap(int* a, int* b) {
   int tmp = *a;
   *a = *b;
@@ -109,12 +111,18 @@ int main(int argc, char **argv) {
     a[i] = rand_r(&seed);
   }
 
+  ctimer_t t;
+  ctimer_start(&t);
+
   wsp_t start, end;
   start = wsp_getworkspan();
 
   sample_qsort(a, a + n);
 
   end = wsp_getworkspan();
+
+  ctimer_stop(&t);
+  ctimer_measure(&t);
 
   // Confirm that a is sorted and that each element contains the index.
   failFlag = 0;
@@ -137,6 +145,7 @@ int main(int argc, char **argv) {
   }
 
   wsp_dump(wsp_sub(end, start), "sample_qsort");
+  ctimer_print(t, "sample_qsort");
 
   // free integer array
   free(a);

@@ -13,6 +13,8 @@
 
 #include <cilk/cilk.h>
 
+#include "ctimer.h"
+
 void swap(int* a, int* b) {
   int tmp = *a;
   *a = *b;
@@ -108,7 +110,13 @@ int main(int argc, char **argv) {
     a[i] = rand_r(&seed);
   }
 
+  ctimer_t t;
+  ctimer_start(&t);
+
   sample_qsort(a, a + n);
+
+  ctimer_stop(&t);
+  ctimer_measure(&t);
 
   // Confirm that a is sorted and that each element contains the index.
   failFlag = 0;
@@ -129,6 +137,8 @@ int main(int argc, char **argv) {
   } else {
     printf("%d sorts failed\n", failCount);
   }
+
+  ctimer_print(t, "sample_qsort");
 
   // free integer array
   free(a);

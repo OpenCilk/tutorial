@@ -5,6 +5,8 @@
 
 #include <cilk/cilk.h>
 
+#include "ctimer.h"
+
 unsigned long long todval (struct timeval *tp) {
     return tp->tv_sec * 1000 * 1000 + tp->tv_usec;
 }
@@ -94,14 +96,14 @@ int main(int argc, char *argv[]) {
   a = (char *) alloca (n * sizeof (char));
   res = 0;
 
-  struct timeval t1, t2;
-  gettimeofday(&t1,0);
+  ctimer_t t;
+  ctimer_start(&t);
 
   res = nqueens(n, 0, a);
 
-  gettimeofday(&t2,0);
-  unsigned long long runtime_ms = (todval(&t2)-todval(&t1))/1000;
-  printf("%f\n", runtime_ms/1000.0);
+  ctimer_stop(&t);
+  ctimer_measure(&t);
+  ctimer_print(t);
 
   if (res == 0) {
     fprintf (stderr, "No solution found.\n");
