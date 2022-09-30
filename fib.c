@@ -8,9 +8,11 @@
 long fib(long n) {
   if (n < 2)
     return n;
-  long x = cilk_spawn fib(n-1);
-  long y = fib(n-2);
-  cilk_sync;
+  long x, y;
+  cilk_scope {
+    x = cilk_spawn fib(n-1);
+    y = fib(n-2);
+  }
   return x + y;
 }
 
