@@ -3,7 +3,6 @@
 
 #include <cilk/cilk.h>
 
-#define CTIMER_MEASURE_ON_STOP
 #include "ctimer.h"
 
 long fib(long n) {
@@ -26,6 +25,7 @@ int main(int argc, char *argv[]) {
   long result = fib(n);
 
   ctimer_stop(&t);
+  ctimer_measure(&t);
 
   printf("fib(%ld) = %ld\n", n, result);
   ctimer_print(t, "fib");
