@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   int failFlag;
 
   // get number of integers to sort, default 1 million
-  int n = 100*100;
+  int n = 1000*1000;
   if (argc > 1) {
     n = atoi(argv[1]);
   }
