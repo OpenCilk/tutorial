@@ -63,12 +63,13 @@ int nqueens (int n, int j, char *a) {
   b = (char *) alloca((j + 1) * sizeof (char));
   memcpy(b, a, j * sizeof (char));
 
-  for (int i = 0; i < n; i++) {
-    b[j] = i;
-    if (ok(j + 1, b))
-      count[i] = cilk_spawn nqueens(n, j + 1, b);
+  cilk_scope {
+    for (int i = 0; i < n; i++) {
+      b[j] = i;
+      if (ok(j + 1, b))
+        count[i] = cilk_spawn nqueens(n, j + 1, b);
+    }
   }
-  cilk_sync;
 
   for (int i = 0; i < n; i++) {
     solNum += count[i];

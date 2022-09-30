@@ -57,12 +57,11 @@ void sample_qsort(int* begin, int* end) {
     // move pivot to middle
     swap((end - 1), middle);
 
-    // sort lower partition
-    cilk_spawn sample_qsort(middle+1, end);
-    sample_qsort(begin, middle);
-
-    // sort upper partition (excluding pivot)
-    cilk_sync;
+    // sort in parallel
+    cilk_scope {
+      cilk_spawn sample_qsort(middle+1, end); // sort upper partition w/o pivot
+      sample_qsort(begin, middle); // sort lower partition
+    }
   }
 }
 
