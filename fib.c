@@ -28,6 +28,6 @@ int main(int argc, char *argv[]) {
   ctimer_stop(&t);
 
   printf("fib(%ld) = %ld\n", n, result);
-  ctimer_print(&t, "fib");
+  ctimer_print(t, "fib");
   return 0;
 }

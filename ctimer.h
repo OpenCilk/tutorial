@@ -7,17 +7,17 @@
  * @sa <https://github.com/sillycross/mlpds/blob/master/fasttime.h>
  *
  * @file        ctimer.h
- * @version     0.3.0
+ * @version     1.0.0
  * @author      Alexandros-Stavros Iliopoulos
  * @license     MIT
- * @copyright   Copyright (c) 2021 Supertech group, CSAIL, MIT
+ * @copyright   Copyright (c) 2021 Supertech Research Group, CSAIL, MIT
  */
 
 
 /******************************************************************************/
 /* MIT License                                                                */
 /*                                                                            */
-/* Copyright (c) 2021 Supertech group, CSAIL, MIT                             */
+/* Copyright (c) 2021 Supertech Research Group, CSAIL, MIT                    */
 /*                                                                            */
 /* Permission is hereby granted, free of charge, to any person obtaining      */
 /* a copy of this software and associated documentation files (the            */
@@ -45,8 +45,11 @@
  *
  * @section overview Overview
  *
- * CTimer is an include-only header library with C/C++ timer utilities using
- * POSIX `clock_gettime()`.
+ * CTimer is an include-only header library for timing C/C++ code.  CTimer uses
+ * the [POSIX `clock_gettime()`][url-man-clock-gettime] function with a
+ * `CLOCK_MONOTONIC` clock to get relative time stamps.
+ *
+ * [url-man-clock-gettime]: https://man7.org/linux/man-pages/man3/clock_gettime.3.html
  *
  * Stopwatch utilities:
  * - `ctimer_t`         :: type of CTimer stopwatch struct
@@ -74,7 +77,7 @@
  *
  * @subsection init Initialization
  *
- * There is no guarantee regarding the initial values of timespec fields in a
+ * There are no guarantees regarding the initial values of timespec fields in a
  * `ctimer_t` stopwatch.  Querying timespecs that haven't been initialized or
  * measured may return arbitrary results; this includes measuring the elapsed
  * time of an unstopped stopwatch.
@@ -127,14 +130,16 @@ extern "C" {
 
 /* unit conversion constants */
 #ifdef __cplusplus              /* C++ */
-static const auto _MSEC_PER_SEC = 1000;
-static const auto _USEC_PER_SEC = 1000 * 1000;
-static const auto _NSEC_PER_SEC = 1000 * 1000 * 1000;
+namespace {
+    const long _MSEC_PER_SEC = 1000;
+    const long _USEC_PER_SEC = 1000 * 1000;
+    const long _NSEC_PER_SEC = 1000 * 1000 * 1000;
+}
 #else  /* C */
 enum {
-_MSEC_PER_SEC = 1000,
-_USEC_PER_SEC = 1000 * 1000,
-_NSEC_PER_SEC = 1000 * 1000 * 1000
+    _MSEC_PER_SEC = 1000,
+    _USEC_PER_SEC = 1000 * 1000,
+    _NSEC_PER_SEC = 1000 * 1000 * 1000
 };
 #endif  /* __cplusplus */
 
@@ -181,9 +186,8 @@ void timespec_sub(
 
 
 /**
- * Calculate the time sum of two `timespec` structs.  Store time in sec and
- * nsec in the `tv_sec` and `tv_nsec` field, respectively, of the output
- * `timespec`.
+ * Calculate the time sum of two `timespec` structs.  Store time in sec and nsec
+ * in the `tv_sec` and `tv_nsec` field, respectively, of the output `timespec`.
  */
 static inline
 void timespec_add(
@@ -255,7 +259,7 @@ long timespec_usec(
  */
 static inline
 long timespec_nsec(
-    struct timespec const t     /**<[in] timespec */
+    struct timespec const t
 ) {
     return t.tv_sec * _NSEC_PER_SEC
         + t.tv_nsec;
@@ -283,8 +287,8 @@ long timespec_nsec(
  * Stopwatch timer struct using `clock_gettime()`.
  */
 typedef struct {
-    struct timespec tic;        /**< Stopwatch start time  */
-    struct timespec toc;        /**< Stopwatch end time */
+    struct timespec start;      /**< Stopwatch start time  */
+    struct timespec end;        /**< Stopwatch end time */
     struct timespec elapsed;    /**< Elapsed/measured time */
 } ctimer_t;
 
@@ -293,15 +297,15 @@ typedef struct {
  * Measure elapsed time of `ctimer_t` stopwatch in s+ns and *store* it in the
  * `elapsed` timer.
  *
- * @warning The stopwatch must be started and stopped before the elapsed time
- * is measured.
+ * @warning The stopwatch must be started and stopped before the elapsed time is
+ * measured.
  *
  * @note It is safe (albeit unnecessary) to measure the elapsed time of a
  * stopped timer multiple times.
  *
  * @note When measuring the cumulative execution time of non-contiguous chunks
- * of a program (e.g., the total time for a sub-computation of a loop body),
- * use `ctimer_lap()`.
+ * of a program (e.g., the total time for a sub-computation of a loop body), use
+ * `ctimer_lap()`.
  *
  * @sa ctimer_lap
  * @sa ctimer_start
@@ -311,7 +315,7 @@ static inline
 void ctimer_measure(
     ctimer_t * t                /**<[in,out] stopwatch pointer */
 ) {
-    timespec_sub( &(t->elapsed), t->toc, t->tic );
+    timespec_sub(&t->elapsed, t->end, t->start);
 }
 
 
@@ -322,8 +326,8 @@ void ctimer_measure(
  * @warning The `elapsed` field of the input stopwatch must be properly
  * initialized (e.g. with `ctimer_reset()`) before calling `ctimer_lap()`.
  *
- * @warning The stopwatch must be started and stopped before the elapsed time
- * is measured.
+ * @warning The stopwatch must be started and stopped before the elapsed time is
+ * measured.
  *
  * @note When measuring the execution time of a single, contiguous chunk of a
  * program, use `ctimer_measure()`.
@@ -337,9 +341,9 @@ static inline
 void ctimer_lap(
     ctimer_t * t                /**<[in,out] stopwatch pointer */
 ) {
-    /* elapsed += toc - tic */
-    timespec_add( &(t->elapsed), t->elapsed, t->toc );
-    timespec_sub( &(t->elapsed), t->elapsed, t->tic );
+    /* elapsed += end - start */
+    timespec_add(&t->elapsed, t->elapsed, t->end);
+    timespec_sub(&t->elapsed, t->elapsed, t->start);
 }
 
 
@@ -357,7 +361,7 @@ void ctimer_reset(
 
 
 /**
- * Start a `ctimer_t` stopwatch.  Sets the the `tic` timer of the stopwatch.
+ * Start a `ctimer_t` stopwatch.  Sets the the `start` timer of the stopwatch.
  *
  * @sa ctimer_stop
  * @sa ctimer_measure
@@ -367,16 +371,16 @@ static inline
 void ctimer_start(
     ctimer_t * t                /**<[in,out] stopwatch pointer */
 ) {
-    clock_gettime( CLOCK_MONOTONIC, &(t->tic) );
+    clock_gettime(CLOCK_MONOTONIC, &t->start);
 }
 
 
 /**
- * Stop a `ctimer_t` stopwatch.  Sets the `toc` timer of the stopwatch.
+ * Stop a `ctimer_t` stopwatch.  Sets the `end` timer of the stopwatch.
  *
  * @note If the `CTIMER_MEASURE_ON_STOP` preprocessor macro is defined _before_
  * the `ctimer/ctimer.h` library is included in a program, then `ctimer_stop`
- * also calculates the elapsed time between `tic` and `toc` and stores it in
+ * also calculates the elapsed time between `start` and `end` and stores it in
  * the `elapsed` field.
  *
  * @sa ctimer_start
@@ -387,9 +391,9 @@ static inline
 void ctimer_stop(
     ctimer_t * t                /**<[in,out] stopwatch pointer */
 ) {
-    clock_gettime( CLOCK_MONOTONIC, &(t->toc) );
+    clock_gettime(CLOCK_MONOTONIC, &t->end);
 #ifdef CTIMER_MEASURE_ON_STOP
-    ctimer_measure( t );
+    ctimer_measure(t);
 #endif
 }
 
@@ -410,15 +414,15 @@ void ctimer_stop(
  */
 static inline
 void ctimer_print(
-    ctimer_t const * t,         /**<[in] stopwatch pointer */
+    ctimer_t const   t,         /**<[in] stopwatch pointer */
     char     const * label      /**<[in] label/description for printed time */
 ) {
     if ((label != NULL) && (label[0] != '\0'))
-        printf( "Time(%s) = ", label );
+        printf("Time(%s) = ", label);
     else
-        printf( "Time = " );
+        printf("Time = ");
 
-    printf( "%ld.%09ld sec\n", (long)t->elapsed.tv_sec, t->elapsed.tv_nsec );
+    printf("%ld.%09ld sec\n", (long)t.elapsed.tv_sec, t.elapsed.tv_nsec);
 }
 
 
