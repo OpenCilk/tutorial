@@ -143,8 +143,8 @@ int main(int argc, char **argv) {
     printf("%d sorts failed\n", failCount);
   }
 
-  wsp_dump(wsp_sub(end, start), "sample_qsort");
   ctimer_print(t, "sample_qsort");
+  wsp_dump(wsp_sub(end, start), "sample_qsort");
 
   // free integer array
   free(a);
