@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
   ctimer_stop(&t);
   ctimer_measure(&t);
-  ctimer_print(t);
+  ctimer_print(t, "nqueens");
 
   if (res == 0) {
     fprintf (stderr, "No solution found.\n");
