@@ -406,8 +406,12 @@ void ctimer_stop(
  * Time(<label>) = XX.XXXXXXXXX sec
  * ```
  *
- * @note This utility function is meant to facilitate standardized printing of
- * elapsed times which may then be parsed by external programs.
+ * If `label` is `NULL` or the empty string, the "(<label>)" tag is omitted
+ * from the printed output.
+ *
+ * @note The elapsed time is always printed with 9 decimal digits, although the
+ * system `CLOCK_MONOTONIC`, may have coarser resolution (e.g., microsecond
+ * resolution).
  *
  * @sa ctimer_measure
  * @sa ctimer_lap
